@@ -2,7 +2,7 @@
 // @name         Onlinetrade Product Search
 // @name:ru      Onlinetrade Поиск товаров
 // @namespace    https://github.com/AlekPet/Onlinetrade-Product-Search
-// @version      0.1
+// @version      0.2
 // @description  Onlinetrade - Product search on other sites
 // @description:ru Onlinetrade - Поиск товара на других сайтах
 // @copyright    2021, AlekPet
@@ -67,7 +67,8 @@ ul.services_list li {
     user-select:none;
 }
 li.service_active{
-    background: #5bffc069;
+    background: #c2fb8fbf;
+    border-left: 5px solid #09ff00;
 }
 .search_goods_button {
     position: absolute;
@@ -88,6 +89,9 @@ li.service_active{
         },
         'YAMarket':{
             s:'https://market.yandex.ru/search?text='
+        },
+        'OZON':{
+            s:'https://www.ozon.ru/search/?from_global=true&text='
         },
         'Citilink':{
             s:'https://www.citilink.ru/search/?text='
@@ -223,7 +227,8 @@ li.service_active{
         while(alllinks.length){
             let curPop = alllinks.join(' ')
             if(/(^\d{1}$)|\.{3}/i.test(curPop)) continue
-            params.items.push({'href':services[currentService].s+encodeURI(curPop),'name':this.srez(curPop.trim(),0, 100), 'title':curPop})
+            curPop = curPop.trim().replace(/,$/ig,'')
+            params.items.push({'href':services[currentService].s+encodeURI(curPop),'name':this.srez(curPop,0, 200), 'title':curPop})
             curPop = alllinks.pop()
         }
         return params
