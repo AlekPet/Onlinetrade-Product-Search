@@ -2,7 +2,7 @@
 // @name         Onlinetrade Product Search
 // @name:ru      Onlinetrade Поиск товаров
 // @namespace    https://github.com/AlekPet/Onlinetrade-Product-Search
-// @version      0.2
+// @version      0.3.1
 // @description  Onlinetrade - Product search on other sites
 // @description:ru Onlinetrade - Поиск товара на других сайтах
 // @copyright    2021, AlekPet
@@ -29,13 +29,12 @@
     padding: 5px;
     background: #ffffffd1;
     box-shadow: 2px 2px 8px #77d2d299;
-    z-index: 14;
-    position: absolute;
     transform: translate(-50%,0);
     transition: all .5s;
     font-size: 0.7em;
     width: 200px;
-    margin-left:-50%;
+    color:#2b52e2;
+    font-weight: bold;
 }
 .menu_cat{}
 .menu_cat > li {
@@ -71,12 +70,15 @@ li.service_active{
     border-left: 5px solid #09ff00;
 }
 .search_goods_button {
+    margin-right: 8px;
+}
+.search_goods_button:before {
+    background-position: -96px 0px;
+}
+.box_items {
+    top: 20px;
     position: absolute;
-    right: 15%;
-    top: 2%;
-    font: bold 1em monospace;
     z-index: 14;
-    color: rgb(0, 83, 185);
 }
 `)
 
@@ -95,6 +97,9 @@ li.service_active{
         },
         'Citilink':{
             s:'https://www.citilink.ru/search/?text='
+        },
+        'Onlinetrade':{
+            s:'https://www.onlinetrade.ru/sitesearch.html?query='
         }
     },
         currentService = Object.keys(services)[0]
@@ -114,37 +119,47 @@ li.service_active{
             log("Модуль поиск в e-katalog'e активирован для отдного товара...")
             let name = $(".productPage__card > .name").text() || $(".productPage__card").children().eq(0).text(),
                 past = $(".catalog__displayedItem__marksLine > .floatLeft"),
-                button = $("<div>Goods Find</div>").css({"font": "bold 1em monospace","margin-left": "50px",'color': '#0053b9','float': 'right','cursor':'pointer'})
+                button = $("<a class='ic__hasSet search_goods_button'><span class='box_items'></span></a>").css({'margin-left': '8px', height: '24px', 'margin-right': 0}), //$("<div>Goods Find</div>").css({"font": "bold 1em monospace","margin-left": "50px",'color': '#0053b9','float': 'right','cursor':'pointer'})
+                pastEl = button.find('.box_items')
 
             button.mouseenter(function(e){
-                self.make_menu(this, name)
+                self.make_menu(pastEl, name)
             })
 
             button.mouseleave(function(e){
-                self.del_menu(this)
+                self.del_menu(pastEl)
             })
             past.append(button)
 
         } else {
             log("Модуль поиск в e-katalog'e активирован для товаров...")
-            let list = $(".indexGoods__item").not(".swiper-slide")
+            let list = $(".indexGoods__item")//.not(".swiper-slide")
+
 
             if(list.length){
                 list.each(function(indx, el){
                     if ($(el).find(".search_goods_button").length>0) return
 
-                    let name = $(el).find("a.indexGoods__item__name").text(),
-                        button = $("<div class='search_goods_button'><span style='font-family: inherit;'>Goods Find</span>")
+                    const name = $(el).find(".indexGoods__item__name").text(),
+                          button = $("<a class='ic__hasSet search_goods_button'><span class='box_items'></span></a>"),
+                          pastEl = button.find('.box_items'),
+                          managerTop = $(el).find(".indexGoods__item__manageTop")
 
                     button.mouseenter(function(e){
-                        self.make_menu(this, name)
+                        self.make_menu(pastEl, name)
                     })
 
                     button.mouseleave(function(e){
-                        self.del_menu(this)
+                        self.del_menu(pastEl)
                     })
 
-                    $(el).append(button)
+                    if(managerTop.length){
+                        managerTop.children().first().before(button)
+
+                    } else {
+                        button.css({left: '50%', top: '-5%', display: 'block', 'z-index': '15','text-align':'left'})
+                        $(el).append(button)
+                    }
 
                 })
             }
