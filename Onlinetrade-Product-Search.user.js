@@ -2,7 +2,7 @@
 // @name         Onlinetrade Product Search
 // @name:ru      Onlinetrade Поиск товаров
 // @namespace    https://github.com/AlekPet/Onlinetrade-Product-Search
-// @version      0.3.1
+// @version      0.3.2
 // @description  Onlinetrade - Product search on other sites
 // @description:ru Onlinetrade - Поиск товара на других сайтах
 // @copyright    2021, AlekPet
@@ -36,13 +36,17 @@
     color:#2b52e2;
     font-weight: bold;
 }
-.menu_cat{}
+.menu_cat{
+    overflow-y: auto;
+    max-height: 350px;
+}
 .menu_cat > li {
     list-style: none;
     margin-bottom: 2px;
     background: linear-gradient(45deg, #77d2d299, transparent);
     border-radius: 0 8px 8px 0;
-    padding-left: 5px;
+    padding: 5px;
+    word-break: break-all;
 }
 .menu_cat > li:hover {
     transition: all .5s;
@@ -80,10 +84,26 @@ li.service_active{
     position: absolute;
     z-index: 14;
 }
+.menu_cat::-webkit-scrollbar {
+    width: 10px;
+}
+.menu_cat::-webkit-scrollbar-button {
+}
+.menu_cat::-webkit-scrollbar-thumb {
+    background: #ff8100;
+    border-radius: 10px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+
+.menu_cat::-webkit-scrollbar-track-piece {
+    background: #d7d7d7;
+    border-radius: 10px;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
 `)
 
     const $ = window.jQuery,
-          debug = !true
+          debug = true
 
     var services = {
         'E-Katalog':{
@@ -100,9 +120,11 @@ li.service_active{
         },
         'Onlinetrade':{
             s:'https://www.onlinetrade.ru/sitesearch.html?query='
+        },
+        'Dns-shop':{
+            s:'https://www.dns-shop.ru/search/?q='
         }
-    },
-        currentService = Object.keys(services)[0]
+    }
 
     // Functions
     function log(text, ...other){
@@ -114,11 +136,15 @@ li.service_active{
     // end - Functions
 
     function getListGoods(){
-        let self = this
-        if (/\.html.*$/i.test(location.href)){
-            log("Модуль поиск в e-katalog'e активирован для отдного товара...")
+        let self = this,
+            list = $(".indexGoods__item"),//.not(".swiper-slide")
+            past = $(".catalog__displayedItem__marksLine > .floatLeft")
+
+        this.currentService = Object.keys(services)[0]
+
+        if (past.length && /\.html.*$/i.test(location.href)){
+            log("Модуль поиска, активирован для отдного товара...")
             let name = $(".productPage__card > .name").text() || $(".productPage__card").children().eq(0).text(),
-                past = $(".catalog__displayedItem__marksLine > .floatLeft"),
                 button = $("<a class='ic__hasSet search_goods_button'><span class='box_items'></span></a>").css({'margin-left': '8px', height: '24px', 'margin-right': 0}), //$("<div>Goods Find</div>").css({"font": "bold 1em monospace","margin-left": "50px",'color': '#0053b9','float': 'right','cursor':'pointer'})
                 pastEl = button.find('.box_items')
 
@@ -131,38 +157,35 @@ li.service_active{
             })
             past.append(button)
 
-        } else {
-            log("Модуль поиск в e-katalog'e активирован для товаров...")
-            let list = $(".indexGoods__item")//.not(".swiper-slide")
+        }
 
+        if(list.length){
+            log("Модуль поиска, активирован для товаров...")
+            list.each(function(indx, el){
+                if ($(el).find(".search_goods_button").length>0) return
 
-            if(list.length){
-                list.each(function(indx, el){
-                    if ($(el).find(".search_goods_button").length>0) return
+                const name = $(el).find(".indexGoods__item__name").text(),
+                      button = $("<a class='ic__hasSet search_goods_button'><span class='box_items'></span></a>"),
+                      pastEl = button.find('.box_items'),
+                      managerTop = $(el).find(".indexGoods__item__manageTop")
 
-                    const name = $(el).find(".indexGoods__item__name").text(),
-                          button = $("<a class='ic__hasSet search_goods_button'><span class='box_items'></span></a>"),
-                          pastEl = button.find('.box_items'),
-                          managerTop = $(el).find(".indexGoods__item__manageTop")
-
-                    button.mouseenter(function(e){
-                        self.make_menu(pastEl, name)
-                    })
-
-                    button.mouseleave(function(e){
-                        self.del_menu(pastEl)
-                    })
-
-                    if(managerTop.length){
-                        managerTop.children().first().before(button)
-
-                    } else {
-                        button.css({left: '50%', top: '-5%', display: 'block', 'z-index': '15','text-align':'left'})
-                        $(el).append(button)
-                    }
-
+                button.mouseenter(function(e){
+                    self.make_menu(pastEl, name)
                 })
-            }
+
+                button.mouseleave(function(e){
+                    self.del_menu(pastEl)
+                })
+
+                if(managerTop.length){
+                    managerTop.children().first().before(button)
+
+                } else {
+                    button.css({left: '50%', top: '-5%', display: 'block', 'z-index': '15','text-align':'left'})
+                    $(el).append(button)
+                }
+
+            })
         }
     }
 
@@ -210,11 +233,11 @@ li.service_active{
             const service = services[s]
 
             let li=$(`<li></li>`).attr('title', s).text(s).click(function(){
-                currentService = s
+                self.currentService = s
                 self.selectService(li, menu, params)
             })
 
-            if(s == currentService && !li.hasClass('service_active')){
+            if(s == this.currentService && !li.hasClass('service_active')){
                 this.prevService = li
                 li.addClass('service_active')
             }
@@ -236,16 +259,24 @@ li.service_active{
 
     getListGoods.prototype.split_links = function(name){
 
-        let alllinks = name.split(" "),
+        let alllinksOrig = name.split(" "),
+            alllinks = [...alllinksOrig],
             params = {name:name, items:[]}
 
         while(alllinks.length){
             let curPop = alllinks.join(' ')
             if(/(^\d{1}$)|\.{3}/i.test(curPop)) continue
             curPop = curPop.trim().replace(/,$/ig,'')
-            params.items.push({'href':services[currentService].s+encodeURI(curPop),'name':this.srez(curPop,0, 200), 'title':curPop})
+            params.items.push({'href':services[this.currentService].s+encodeURI(curPop),'name':this.srez(curPop,0, 200), 'title':curPop})
             curPop = alllinks.pop()
         }
+
+        let advVariants = alllinksOrig.map((item)=>({'href':services[this.currentService].s+encodeURI(item),'name':this.srez(item,0, 200), 'title':item})).filter((cv)=>{
+            for(let x of params.items) if(x.name == cv.name) return false
+            return true
+        })
+        params.items = [...params.items,...advVariants]
+
         return params
     }
 
