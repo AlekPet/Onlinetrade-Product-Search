@@ -2,7 +2,7 @@
 // @name         Onlinetrade Product Search
 // @name:ru      Onlinetrade Поиск товаров
 // @namespace    https://github.com/AlekPet/Onlinetrade-Product-Search
-// @version      0.3.2
+// @version      0.3.3
 // @description  Onlinetrade - Product search on other sites
 // @description:ru Onlinetrade - Поиск товара на других сайтах
 // @copyright    2021, AlekPet
@@ -186,6 +186,81 @@ li.service_active{
                 }
 
             })
+
+
+            // Reviews
+            let sort = $('<div>').css('float', 'right').html(`<select id='sorted_reviews'>
+            <option value="none">Без сортировки</option>
+            <option value="dup">Дата по возр.</option>
+            <option value="dud">Дата по убыв.</option>
+            <option value="sup">Рейтинг по возр.</option>
+            <option value="sd">Рейтинг по убыв.</option>
+            </select>`), select = null
+
+            $('#tabs_feedbacks h3:eq(0)').append(sort)
+            select = $('#sorted_reviews')
+
+            sort.change(()=>{
+                const select_val = select.val()
+                if(select_val == 'none') return
+
+                let ritems = $('.reviewlist__item[itemprop]'),
+                    arr_feed = [],
+                    parent = ritems.parent().eq(0)
+
+                ritems.each((idx,item)=>{
+                    const $item = $(item)
+
+                    if($item.hasClass('noDisplay')) $item.removeClass('noDisplay')
+
+                    let feedback = $item.find('.feedbacksHeader_info')
+
+                    if(feedback.length){
+                        let stars, opit, date
+                        if(feedback.length === 3) [stars, opit, date] = [...feedback.get()]
+                        if(feedback.length === 2) [stars, date] = [...feedback.get()]
+
+                        stars = stars.children[0].title.includes('Оценка') ? +stars.children[0].title.match(/(\d+)/g) : 0
+
+                        let [_date, _time] = [...date.children[1].textContent.split(' ')]
+                        _date = _date.slice(0,10).split('.').reverse().join('-')
+
+                        _date = new Date(_date+' '+_time+':00')
+
+                        arr_feed.push({el:$item, stars: stars, date: _date})
+
+                    }
+                })
+
+                if(select_val == 'dup' || select_val == 'dud'){
+                    arr_feed.sort(function(a,b) {
+                        var an = a.date,
+                            bn = b.date
+                        return an - bn;
+                    });
+
+                    if(select_val == 'dud') arr_feed.reverse()
+
+                }
+
+
+                if(select_val == 'sup' || select_val == 'sd'){
+                    arr_feed.sort(function(a,b) {
+                        var an = a.stars,
+                            bn = b.stars
+                        return an - bn;
+                    });
+
+                    if(select_val == 'sd') arr_feed.reverse()
+
+                }
+
+                for(let i of arr_feed){
+                    let el = i.el
+                    el.detach().appendTo(parent)
+                }
+            })
+
         }
     }
 
